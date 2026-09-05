@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 const CONVERSATION_ID =
   "fb4cb8f3-ae55-4b19-8e50-b9323596063d";
 
 function App() {
-  const [conversation, setConversation] = useState(null); 
+  const [conversation, setConversation] = useState(null);
   const [customerMessage, setCustomerMessage] = useState("");
   const [reply, setReply] = useState("");
   const [originalReply, setOriginalReply] = useState("");
@@ -21,13 +24,13 @@ function App() {
     const fetchConversation = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/conversations/${CONVERSATION_ID}`
+          `${API_URL}/conversations/${CONVERSATION_ID}`
         );
 
         setConversation(response.data.conversation);
-setCustomerMessage(
-  response.data.conversation.customer_message
-);
+        setCustomerMessage(
+          response.data.conversation.customer_message
+        );
       } catch (error) {
         console.error(error);
         setError("Failed to load conversation.");
@@ -42,7 +45,8 @@ setCustomerMessage(
   const generateReply = async () => {
     if (!conversation) return;
 
-const currentMessage = customerMessage;
+    const currentMessage = customerMessage;
+
     if (!currentMessage.trim()) {
       setError("Customer message cannot be empty.");
       return;
@@ -54,7 +58,7 @@ const currentMessage = customerMessage;
       setError("");
 
       const response = await axios.post(
-        "http://localhost:5000/api/generate-reply",
+        `${API_URL}/generate-reply`,
         {
           brandId: conversation.brand_id,
           customerMessage: currentMessage,
@@ -65,8 +69,11 @@ const currentMessage = customerMessage;
         }
       );
 
-      setReply(response.data.reply); 
-      console.log("AI REPLY FROM BACKEND:", response.data.reply);
+      setReply(response.data.reply);
+      console.log(
+        "AI REPLY FROM BACKEND:",
+        response.data.reply
+      );
       setOriginalReply(response.data.reply);
       setKnowledge(response.data.knowledge);
     } catch (error) {
@@ -96,10 +103,10 @@ const currentMessage = customerMessage;
         .join("\n\n");
 
       const response = await axios.post(
-        "http://localhost:5000/api/reply-logs",
+        `${API_URL}/reply-logs`,
         {
           conversationId: conversation.id,
-          customerMessage: conversation.customer_message,
+          customerMessage: customerMessage,
           retrievedContext,
           aiGeneratedResponse: originalReply,
           agentEditedResponse:
@@ -124,7 +131,11 @@ const currentMessage = customerMessage;
   };
 
   if (loadingConversation) {
-    return <div className="loading">Loading conversation...</div>;
+    return (
+      <div className="loading">
+        Loading conversation...
+      </div>
+    );
   }
 
   if (error && !conversation) {
@@ -156,12 +167,16 @@ const currentMessage = customerMessage;
           <div className="customer-info">
             <div>
               <span>Customer</span>
-              <strong>{conversation?.customer_name}</strong>
+              <strong>
+                {conversation?.customer_name}
+              </strong>
             </div>
 
             <div>
               <span>Order</span>
-              <strong>{conversation?.order_number}</strong>
+              <strong>
+                {conversation?.order_number}
+              </strong>
             </div>
           </div>
 
@@ -170,13 +185,13 @@ const currentMessage = customerMessage;
               Customer Message
             </div>
 
-           <textarea
-  className="customer-message-input"
-  value={customerMessage}
-  onChange={(event) =>
-    setCustomerMessage(event.target.value)
-  }
-/>
+            <textarea
+              className="customer-message-input"
+              value={customerMessage}
+              onChange={(event) =>
+                setCustomerMessage(event.target.value)
+              }
+            />
           </div>
 
           <div className="order-card">
@@ -185,17 +200,23 @@ const currentMessage = customerMessage;
             <div className="order-grid">
               <div>
                 <span>Status</span>
-                <strong>{conversation?.order_status}</strong>
+                <strong>
+                  {conversation?.order_status}
+                </strong>
               </div>
 
               <div>
                 <span>Product</span>
-                <strong>{conversation?.product}</strong>
+                <strong>
+                  {conversation?.product}
+                </strong>
               </div>
 
               <div>
                 <span>Delivered</span>
-                <strong>{conversation?.delivered_at}</strong>
+                <strong>
+                  {conversation?.delivered_at}
+                </strong>
               </div>
             </div>
           </div>
@@ -205,7 +226,9 @@ const currentMessage = customerMessage;
             onClick={generateReply}
             disabled={generating}
           >
-            {generating ? "Generating..." : "Generate Reply"}
+            {generating
+              ? "Generating..."
+              : "Generate Reply"}
           </button>
 
           {error && (
@@ -237,7 +260,9 @@ const currentMessage = customerMessage;
               <div className="reply-actions">
                 <button
                   onClick={generateReply}
-                  disabled={generating || approving}
+                  disabled={
+                    generating || approving
+                  }
                 >
                   {generating
                     ? "Generating..."
@@ -247,7 +272,9 @@ const currentMessage = customerMessage;
                 <button
                   className="approve-button"
                   onClick={approveReply}
-                  disabled={approving || approved}
+                  disabled={
+                    approving || approved
+                  }
                 >
                   {approving
                     ? "Saving..."
@@ -264,8 +291,8 @@ const currentMessage = customerMessage;
               <h3>No reply generated yet</h3>
 
               <p>
-                Click "Generate Reply" to create a response
-                using the brand knowledge base.
+                Click "Generate Reply" to create a
+                response using the brand knowledge base.
               </p>
             </div>
           )}
