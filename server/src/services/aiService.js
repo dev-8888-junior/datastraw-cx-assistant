@@ -67,7 +67,7 @@ Now write ONLY the final customer-facing reply.
         },
       ],
       temperature: 0.1,
-      max_tokens: 500,
+      max_tokens: 800,
     });
 
     return completion.choices?.[0]?.message?.content?.trim();
