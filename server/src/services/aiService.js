@@ -75,14 +75,36 @@ Now write ONLY the final customer-facing reply.
 
   let reply = await request();
 
-  // Retry once if the model returns an empty response.
-  if (!reply) {
-    console.log("AI returned an empty response. Retrying...");
+  const isSuspiciouslyShort = (text) => {
+    if (!text) return true;
+
+    const wordCount = text
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+
+    return wordCount < 8;
+  };
+
+  // Retry once if the model returns an empty or suspiciously short response.
+  if (isSuspiciouslyShort(reply)) {
+    console.log(
+      "AI returned an empty or suspiciously short response. Retrying..."
+    );
+
     reply = await request();
   }
 
   if (!reply) {
-    throw new Error("AI returned an empty response after retrying.");
+    throw new Error(
+      "AI returned an empty response after retrying."
+    );
+  }
+
+  if (isSuspiciouslyShort(reply)) {
+    throw new Error(
+      "AI returned an unusually short response after retrying."
+    );
   }
 
   return reply;
