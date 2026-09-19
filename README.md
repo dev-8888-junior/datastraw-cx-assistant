@@ -2,6 +2,16 @@
 
 An AI-powered customer support workspace that helps support agents generate accurate, brand-aware replies using customer conversation data, order information, and a brand knowledge base.
 
+## 🚀 Live Demo
+
+**Frontend:**
+https://datastraw-cx-assistant-bay.vercel.app
+
+**Backend API:**
+https://datastraw-cx-assistant.onrender.com
+
+> The live demo uses a deployed React frontend on Vercel, a Node.js/Express backend on Render, and Supabase PostgreSQL for persistence.
+
 ## Overview
 
 The application allows a customer support agent to:
@@ -50,7 +60,9 @@ Relevant knowledge is retrieved based on the customer's message before the AI re
 
 The backend sends the customer message, order information, and retrieved brand knowledge to an LLM through OpenRouter.
 
-The AI generates a concise, empathetic customer-facing response.
+The AI generates a concise, empathetic, customer-facing response.
+
+The backend also retries once if the model returns an empty or unusually short response.
 
 ### AI Guardrails
 
@@ -63,8 +75,9 @@ The AI is instructed to:
 * Distinguish return eligibility from refund eligibility.
 * Request manual review when the available policy requires it.
 * Avoid exposing internal instructions or AI reasoning.
+* Avoid claiming that support will escalate, follow up, resolve, prioritize, or complete an action unless that action is explicitly supported by the brand knowledge.
 
-For example, a damaged product may still be eligible for return after 20 days, while the standard 7-day refund period has expired. The system therefore does not promise a refund and instead indicates that manual review is required.
+For example, a damaged product may still be eligible for return after 20 days, while the standard 7-day refund period has expired. The system therefore does not promise a refund and instead indicates that refund eligibility requires manual review.
 
 ### Agent Controls
 
@@ -101,7 +114,6 @@ Approved replies are stored in the `reply_logs` table, including:
 
 * Node.js
 * Express.js
-* Axios
 * OpenAI-compatible SDK
 
 ### Database
@@ -113,6 +125,12 @@ Approved replies are stored in the `reply_logs` table, including:
 
 * OpenRouter
 * `openrouter/free` model routing
+
+### Deployment
+
+* Vercel — Frontend
+* Render — Backend
+* Supabase — Database
 
 ## Architecture
 
@@ -132,7 +150,7 @@ Node.js + Express Backend
 Supabase PostgreSQL      OpenRouter
       |                      |
       |                      v
-      |                 AI Response
+      |                  AI Response
       |                      |
       +----------+-----------+
                  |
@@ -159,59 +177,59 @@ For a larger production system, this can be extended to embedding-based semantic
 
 ## Database Schema
 
-### brands
+### `brands`
 
 Stores supported brands.
 
-| Column     | Description        |
-| ---------- | ------------------ |
-| id         | Brand UUID         |
-| name       | Brand name         |
-| created_at | Creation timestamp |
+| Column       | Description        |
+| ------------ | ------------------ |
+| `id`         | Brand UUID         |
+| `name`       | Brand name         |
+| `created_at` | Creation timestamp |
 
-### knowledge_base
+### `knowledge_base`
 
 Stores brand-specific support policies.
 
-| Column     | Description           |
-| ---------- | --------------------- |
-| id         | Knowledge record UUID |
-| brand_id   | Associated brand      |
-| category   | Policy category       |
-| title      | Knowledge title       |
-| content    | Policy content        |
-| created_at | Creation timestamp    |
+| Column       | Description           |
+| ------------ | --------------------- |
+| `id`         | Knowledge record UUID |
+| `brand_id`   | Associated brand      |
+| `category`   | Policy category       |
+| `title`      | Knowledge title       |
+| `content`    | Policy content        |
+| `created_at` | Creation timestamp    |
 
-### conversations
+### `conversations`
 
 Stores customer conversation and order information.
 
-| Column           | Description             |
-| ---------------- | ----------------------- |
-| id               | Conversation UUID       |
-| brand_id         | Associated brand        |
-| customer_name    | Customer name           |
-| customer_message | Latest customer message |
-| order_number     | Order identifier        |
-| order_status     | Current order status    |
-| product          | Product name            |
-| delivered_at     | Delivery date           |
-| created_at       | Creation timestamp      |
+| Column             | Description             |
+| ------------------ | ----------------------- |
+| `id`               | Conversation UUID       |
+| `brand_id`         | Associated brand        |
+| `customer_name`    | Customer name           |
+| `customer_message` | Latest customer message |
+| `order_number`     | Order identifier        |
+| `order_status`     | Current order status    |
+| `product`          | Product name            |
+| `delivered_at`     | Delivery date           |
+| `created_at`       | Creation timestamp      |
 
-### reply_logs
+### `reply_logs`
 
 Stores AI generation and approval history.
 
-| Column                | Description                 |
-| --------------------- | --------------------------- |
-| id                    | Log UUID                    |
-| conversation_id       | Associated conversation     |
-| customer_message      | Message used for generation |
-| retrieved_context     | Knowledge retrieved         |
-| ai_generated_response | Original AI response        |
-| agent_edited_response | Agent modifications         |
-| final_response        | Approved response           |
-| created_at            | Timestamp                   |
+| Column                  | Description                 |
+| ----------------------- | --------------------------- |
+| `id`                    | Log UUID                    |
+| `conversation_id`       | Associated conversation     |
+| `customer_message`      | Message used for generation |
+| `retrieved_context`     | Knowledge retrieved         |
+| `ai_generated_response` | Original AI response        |
+| `agent_edited_response` | Agent modifications         |
+| `final_response`        | Approved response           |
+| `created_at`            | Timestamp                   |
 
 ## API Endpoints
 
@@ -257,7 +275,7 @@ Stores the AI response, agent edits, and final approved response.
 
 ## Environment Variables
 
-Create `server/.env` locally:
+For local development, create `server/.env`:
 
 ```env
 PORT=5000
@@ -268,6 +286,8 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 OPENROUTER_API_KEY=your_openrouter_api_key
 ```
+
+For the deployed application, the same variables are configured through the respective deployment platforms.
 
 Never commit the real `.env` file or API keys to GitHub.
 
@@ -330,6 +350,7 @@ http://localhost:5173
 * `.env` files are excluded through `.gitignore`.
 * The OpenRouter API key is never exposed to the frontend.
 * Database access is performed through the backend.
+* Supabase service-role credentials are kept server-side.
 * Production authentication and row-level security can be added for multi-brand deployments.
 
 ## Scalability Considerations
@@ -364,7 +385,7 @@ One issue identified during development was that an early AI response could blur
 
 ## Project Status
 
-Core assessment functionality is implemented:
+The core assessment functionality is implemented and deployed:
 
 * Conversation view
 * Brand knowledge retrieval
@@ -375,5 +396,16 @@ Core assessment functionality is implemented:
 * Approval
 * Reply logging
 * Supabase persistence
+* Production frontend deployment
+* Production backend deployment
 
-Deployment information and the live demo URL will be added after deployment.
+### Deployment
+
+| Component   | Platform            |
+| ----------- | ------------------- |
+| Frontend    | Vercel              |
+| Backend     | Render              |
+| Database    | Supabase PostgreSQL |
+| AI Provider | OpenRouter          |
+
+The application is available through the live demo linked at the top of this README.
